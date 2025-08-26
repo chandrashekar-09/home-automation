@@ -1,4 +1,4 @@
-import {genkit, GenerationOptions} from 'genkit';
+import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 
 export const ai = genkit({
@@ -9,6 +9,6 @@ export const ai = genkit({
   ],
   // Use a global model configuration
   generate: {
-    model: 'googleai/gemini-2.5-flash',
-  } as GenerationOptions,
+    model: 'googleai/gemini-1.5-flash',
+  },
 });
