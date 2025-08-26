@@ -1,7 +1,7 @@
 'use client';
 
 import { askQuestion } from '@/app/actions';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -17,10 +17,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Bot, FileText, Loader2, Send, UploadCloud, User } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
-
-const MOCK_PDF_TEXT = `To Sherlock Holmes she is always the woman. I have seldom heard him mention her under any other name. In his eyes she eclipses and predominates the whole of her sex. It was not that he felt any emotion akin to love for Irene Adler. All emotions, and that one particularly, were abhorrent to his cold, precise but admirably balanced mind. He was, I take it, the most perfect reasoning and observing machine that the world has seen, but as a lover he would have placed himself in a false position. He never spoke of the softer passions, save with a gibe and a sneer. They were admirable things for the observer—excellent for drawing the veil from men’s motives and actions. But for the trained reasoner to admit such intrusions into his own delicate and finely adjusted temperament was to introduce a distracting factor which might throw a doubt upon all his mental results. Grit in a sensitive instrument, or a crack in one of his own high-power lenses, would not be more disturbing than a strong emotion in a nature such as his. And yet there was but one woman to him, and that woman was the late Irene Adler, of dubious and questionable memory.
-
-I had seen little of Holmes lately. My marriage had drifted us away from each other. My own complete happiness, and the home-centred interests which rise up around the man who first finds himself master of his own establishment, were sufficient to absorb all my attention, while Holmes, who loathed every form of society with his whole Bohemian soul, remained in our lodgings in Baker Street, buried among his old books, and alternating from week to week between cocaine and ambition, the drowsiness of the drug, and the fierce energy of his own keen nature. He was still, as ever, deeply attracted by the study of crime, and occupied his immense faculties and extraordinary powers of observation in following out those clues, and clearing up those mysteries which had been abandoned as hopeless by the official police. From time to time I heard some vague account of his doings: of his summons to Odessa in the case of the Trepoff murder, of his clearing up of the singular tragedy of the Atkinson brothers at Trincomalee, and finally of the mission which he had accomplished so delicately and successfully for the reigning family of Holland. Beyond these signs of his activity, however, which I merely shared with all the readers of the daily press, I knew little of my former friend and companion.`;
 
 type ChatMessage = {
   role: 'user' | 'assistant';
@@ -65,6 +61,7 @@ export function ScholarAI() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
   const [highlightedExcerpts, setHighlightedExcerpts] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,18 +75,35 @@ export function ScholarAI() {
     }
   }, [chatHistory, isLoading]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'application/pdf') {
+      setIsParsing(true);
       setPdfFile(file);
-      setPdfText(MOCK_PDF_TEXT);
-      setChatHistory([
-        {
-          role: 'assistant',
-          content: `I've loaded the document. What would you like to know about "${file.name}"?`,
-        },
-      ]);
-      setHighlightedExcerpts([]);
+      try {
+        // Mocking PDF parsing since pdfjs-dist is removed
+        setTimeout(() => {
+          const mockText = `This is mock content for ${file.name}. The actual PDF parsing is disabled due to an installation issue.`;
+          setPdfText(mockText);
+          setChatHistory([
+            {
+              role: 'assistant',
+              content: `I've loaded the document. What would you like to know about "${file.name}"?`,
+            },
+          ]);
+          setHighlightedExcerpts([]);
+          setIsParsing(false);
+        }, 1000);
+      } catch (error) {
+         console.error('Error reading file:', error);
+         toast({
+          variant: 'destructive',
+          title: 'File Read Error',
+          description: 'Could not read the selected file.',
+        });
+        setIsParsing(false);
+        setPdfFile(null);
+      }
     } else {
       toast({
         variant: 'destructive',
@@ -155,9 +169,8 @@ export function ScholarAI() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <Button onClick={() => fileInputRef.current?.click()}>
-              <UploadCloud className="mr-2 h-4 w-4" />
-              Upload PDF
+            <Button onClick={() => fileInputRef.current?.click()} disabled={isParsing}>
+              {isParsing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Parsing...</> : <><UploadCloud className="mr-2 h-4 w-4" /> Upload PDF</>}
             </Button>
             <Input
               type="file"
@@ -271,9 +284,9 @@ export function ScholarAI() {
               }}
               rows={1}
               className="min-h-[40px] max-h-24 flex-grow resize-none"
-              disabled={isLoading}
+              disabled={isLoading || isParsing}
             />
-            <Button type="submit" size="icon" disabled={isLoading}>
+            <Button type="submit" size="icon" disabled={isLoading || isParsing}>
               <Send className="h-4 w-4" />
             </Button>
           </form>
