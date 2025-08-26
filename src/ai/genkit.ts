@@ -7,7 +7,6 @@ export const ai = genkit({
       apiVersion: 'v1beta',
     }),
   ],
-  // Use a global model configuration
   generate: {
     model: 'googleai/gemini-1.5-flash',
   },

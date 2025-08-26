@@ -1,37 +1,15 @@
 'use server';
 /**
  * @fileOverview Semantic search flow for retrieving relevant text excerpts from uploaded PDFs.
- *
- * - semanticSearch - A function that takes a question and PDF content and returns relevant text excerpts.
- * - SemanticSearchInput - The input type for the semanticSearch function.
- * - SemanticSearchOutput - The return type for the semanticSearch function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const SemanticSearchInputSchema = z.object({
-  question: z
-    .string()
-    .describe('The question to search for relevant information.'),
-  pdfContent: z
-    .string()
-    .describe('The extracted text content from the PDF documents.'),
-});
-export type SemanticSearchInput = z.infer<typeof SemanticSearchInputSchema>;
-
-const SemanticSearchOutputSchema = z.object({
-  excerpts: z
-    .array(z.string())
-    .describe('The most relevant text excerpts from the PDF content that help answer the question.'),
-});
-export type SemanticSearchOutput = z.infer<typeof SemanticSearchOutputSchema>;
-
-export async function semanticSearch(
-  input: SemanticSearchInput
-): Promise<SemanticSearchOutput> {
-  return semanticSearchFlow(input);
-}
+import {
+  SemanticSearchInput,
+  SemanticSearchInputSchema,
+  SemanticSearchOutput,
+  SemanticSearchOutputSchema,
+} from './types';
 
 const semanticSearchPrompt = ai.definePrompt({
   name: 'semanticSearchPrompt',
@@ -63,6 +41,15 @@ const semanticSearchFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await semanticSearchPrompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('The AI model did not return valid excerpts.');
+    }
+    return output;
   }
 );
+
+export async function semanticSearch(
+  input: SemanticSearchInput
+): Promise<SemanticSearchOutput> {
+  return semanticSearchFlow(input);
+}

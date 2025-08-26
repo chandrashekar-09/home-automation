@@ -1,8 +1,8 @@
 'use client';
 
-import { askQuestion } from '@/app/actions';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import {askQuestion} from '@/app/actions';
+import {Avatar, AvatarFallback} from '@/components/ui/avatar';
+import {Button} from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -11,12 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { Bot, FileText, Loader2, Send, UploadCloud, User } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import {Input} from '@/components/ui/input';
+import {ScrollArea} from '@/components/ui/scroll-area';
+import {Textarea} from '@/components/ui/textarea';
+import {useToast} from '@/hooks/use-toast';
+import {Bot, FileText, Loader2, Send, UploadCloud, User} from 'lucide-react';
+import React, {useEffect, useRef, useState} from 'react';
 
 // pdfjs-dist is loaded from a CDN in layout.tsx
 declare const pdfjsLib: any;
@@ -42,19 +42,23 @@ const HighlightedContent = ({
   }
 
   let highlightedText = text;
-  highlights.forEach(highlight => {
+  highlights.forEach((highlight) => {
     if (highlight.trim() === '') return;
-    const regex = new RegExp(escapeRegExp(highlight), 'g');
-    highlightedText = highlightedText.replace(
-      regex,
-      `<mark class="bg-accent/30 text-primary rounded-sm px-1 py-0.5">${highlight}</mark>`
-    );
+    try {
+      const regex = new RegExp(escapeRegExp(highlight), 'g');
+      highlightedText = highlightedText.replace(
+        regex,
+        `<mark class="bg-accent/30 text-primary rounded-sm px-1 py-0.5">${highlight}</mark>`
+      );
+    } catch (e) {
+      console.error('Failed to highlight text', e);
+    }
   });
 
   return (
     <div
       className="whitespace-pre-wrap p-6 text-sm"
-      dangerouslySetInnerHTML={{ __html: highlightedText.replace(/\n/g, '<br />') }}
+      dangerouslySetInnerHTML={{__html: highlightedText.replace(/\n/g, '<br />')}}
     />
   );
 };
@@ -71,7 +75,7 @@ export function ScholarAI() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatScrollAreaRef = useRef<any>(null);
-  const { toast } = useToast();
+  const {toast} = useToast();
 
   useEffect(() => {
     const checkPdfJs = () => {
@@ -87,12 +91,14 @@ export function ScholarAI() {
 
   useEffect(() => {
     // Scroll to the bottom of the chat history
-    const viewport = chatScrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    const viewport =
+      chatScrollAreaRef.current?.querySelector(
+        '[data-radix-scroll-area-viewport]'
+      );
     if (viewport) {
       viewport.scrollTop = viewport.scrollHeight;
     }
   }, [chatHistory, isLoading]);
-
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -103,7 +109,8 @@ export function ScholarAI() {
         toast({
           variant: 'destructive',
           title: 'PDF Library Not Loaded',
-          description: 'The PDF parsing library is still loading. Please try again in a moment.',
+          description:
+            'The PDF parsing library is still loading. Please try again in a moment.',
         });
         return;
       }
@@ -119,7 +126,9 @@ export function ScholarAI() {
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
-            fullText += textContent.items.map((item: any) => ('str' in item ? item.str : '')).join(' ');
+            fullText += textContent.items
+              .map((item: any) => ('str' in item ? item.str : ''))
+              .join(' ');
             fullText += '\n';
           }
           setPdfText(fullText);
@@ -152,13 +161,12 @@ export function ScholarAI() {
     }
   };
 
-
   const handleQuestionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentQuestion.trim() || isLoading) return;
 
     const newQuestion = currentQuestion.trim();
-    setChatHistory(prev => [...prev, { role: 'user', content: newQuestion }]);
+    setChatHistory((prev) => [...prev, {role: 'user', content: newQuestion}]);
     setCurrentQuestion('');
     setIsLoading(true);
     setHighlightedExcerpts([]);
@@ -171,23 +179,25 @@ export function ScholarAI() {
     setIsLoading(false);
 
     if (result.success && result.answer) {
-      setChatHistory(prev => [
+      setChatHistory((prev) => [
         ...prev,
-        { role: 'assistant', content: result.answer! },
+        {role: 'assistant', content: result.answer!},
       ]);
       setHighlightedExcerpts(result.excerpts || []);
     } else {
-      setChatHistory(prev => [
+      const errorMessage =
+        result.error || 'An unknown error occurred. Please try again.';
+      setChatHistory((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `Sorry, I encountered an error. Please try again. ${result.error || ''}`,
+          content: `Sorry, I encountered an error. ${errorMessage}`,
         },
       ]);
       toast({
         variant: 'destructive',
         title: 'An error occurred',
-        description: result.error,
+        description: errorMessage,
       });
     }
   };
@@ -209,8 +219,24 @@ export function ScholarAI() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <Button onClick={() => fileInputRef.current?.click()} disabled={isParsing || !isPdfJsLoaded}>
-              {isParsing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Parsing...</> : !isPdfJsLoaded ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading PDF Lib...</> :<><UploadCloud className="mr-2 h-4 w-4" /> Upload PDF</>}
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isParsing || !isPdfJsLoaded}
+            >
+              {isParsing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Parsing...
+                </>
+              ) : !isPdfJsLoaded ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading PDF
+                  Lib...
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="mr-2 h-4 w-4" /> Upload PDF
+                </>
+              )}
             </Button>
             <Input
               type="file"
@@ -226,117 +252,125 @@ export function ScholarAI() {
   }
 
   return (
-    <main className="grid h-screen w-full grid-cols-1 lg:grid-cols-2 gap-4 p-4 animate-in fade-in-50 duration-500">
-      <div className="flex flex-col h-[calc(100vh-2rem)]">
-        <Card className="flex flex-col flex-grow">
-          <CardHeader className="flex-shrink-0">
-            <CardTitle className="font-headline text-xl flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Document Viewer
-            </CardTitle>
-            <CardDescription>{pdfFile.name}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow overflow-hidden">
-            <ScrollArea className="h-full rounded-md border">
-              <HighlightedContent
-                text={pdfText}
-                highlights={highlightedExcerpts}
-              />
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="h-screen w-full flex flex-col">
+      <main className="flex-grow grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 overflow-hidden">
+        {/* Left Panel: Document Viewer */}
+        <div className="flex flex-col h-full max-h-[calc(100vh-2rem)] overflow-hidden">
+          <Card className="flex flex-col flex-grow">
+            <CardHeader className="flex-shrink-0">
+              <CardTitle className="font-headline text-xl flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Document Viewer
+              </CardTitle>
+              <CardDescription>{pdfFile.name}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow overflow-auto">
+              <ScrollArea className="h-full rounded-md border">
+                <HighlightedContent
+                  text={pdfText}
+                  highlights={highlightedExcerpts}
+                />
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
 
-      <div className="h-[calc(100vh-2rem)] flex flex-col">
-        <Card className="flex flex-col h-full">
-          <CardHeader className="flex-shrink-0">
-            <CardTitle className="font-headline text-xl flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              ScholarAI Assistant
-            </CardTitle>
-            <CardDescription>
-              Ask questions about the document and get AI-powered answers.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow overflow-hidden">
-            <ScrollArea className="h-full pr-4" ref={chatScrollAreaRef}>
-              <div className="space-y-4">
-                {chatHistory.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-start gap-3 ${
-                      message.role === 'user' ? 'justify-end' : ''
-                    }`}
-                  >
-                    {message.role === 'assistant' && (
+        {/* Right Panel: Chat Assistant */}
+        <div className="h-full flex flex-col max-h-[calc(100vh-2rem)] overflow-hidden">
+          <Card className="flex flex-col h-full">
+            <CardHeader className="flex-shrink-0">
+              <CardTitle className="font-headline text-xl flex items-center gap-2">
+                <Bot className="h-5 w-5" />
+                ScholarAI Assistant
+              </CardTitle>
+              <CardDescription>
+                Ask questions about the document and get AI-powered answers.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow overflow-hidden">
+              <ScrollArea className="h-full pr-4" ref={chatScrollAreaRef}>
+                <div className="space-y-4">
+                  {chatHistory.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-start gap-3 ${
+                        message.role === 'user' ? 'justify-end' : ''
+                      }`}
+                    >
+                      {message.role === 'assistant' && (
+                        <Avatar className="h-8 w-8 border-2 border-primary">
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            <Bot size={18} />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div
+                        className={`max-w-[80%] rounded-lg p-3 text-sm ${
+                          message.role === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <p>{message.content}</p>
+                      </div>
+                      {message.role === 'user' && (
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>
+                            <User size={18} />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex items-start gap-3">
                       <Avatar className="h-8 w-8 border-2 border-primary">
                         <AvatarFallback className="bg-primary text-primary-foreground">
                           <Bot size={18} />
                         </AvatarFallback>
                       </Avatar>
-                    )}
-                    <div
-                      className={`max-w-[80%] rounded-lg p-3 text-sm ${
-                        message.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}
-                    >
-                      <p>{message.content}</p>
-                    </div>
-                    {message.role === 'user' && (
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>
-                          <User size={18} />
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-8 w-8 border-2 border-primary">
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        <Bot size={18} />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="max-w-[80%] rounded-lg p-3 bg-muted">
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Thinking...</span>
+                      <div className="max-w-[80%] rounded-lg p-3 bg-muted">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Thinking...</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-          <CardFooter>
-            <form
-              onSubmit={handleQuestionSubmit}
-              className="flex w-full items-center gap-2"
-            >
-              <Textarea
-                placeholder="Type your question here..."
-                value={currentQuestion}
-                onChange={e => setCurrentQuestion(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleQuestionSubmit(e);
-                  }
-                }}
-                rows={1}
-                className="min-h-[40px] max-h-24 flex-grow resize-none"
-                disabled={isLoading || isParsing}
-              />
-              <Button type="submit" size="icon" disabled={isLoading || isParsing || !currentQuestion.trim()}>
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-          </CardFooter>
-        </Card>
-      </div>
-    </main>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+            <CardFooter className="flex-shrink-0">
+              <form
+                onSubmit={handleQuestionSubmit}
+                className="flex w-full items-center gap-2"
+              >
+                <Textarea
+                  placeholder="Type your question here..."
+                  value={currentQuestion}
+                  onChange={(e) => setCurrentQuestion(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleQuestionSubmit(e);
+                    }
+                  }}
+                  rows={1}
+                  className="min-h-[40px] max-h-24 flex-grow resize-none"
+                  disabled={isLoading || isParsing}
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={isLoading || isParsing || !currentQuestion.trim()}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </CardFooter>
+          </Card>
+        </div>
+      </main>
+    </div>
   );
 }
