@@ -7,7 +7,4 @@ export const ai = genkit({
       apiVersion: 'v1beta',
     }),
   ],
-  generate: {
-    model: 'googleai/gemini-1.5-flash',
-  },
 });

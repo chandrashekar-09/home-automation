@@ -6,8 +6,8 @@
 import {ai} from '@/ai/genkit';
 import {
   GenerateAnswerInput,
-  GenerateAnswerInputSchema,
   GenerateAnswerOutput,
+  GenerateAnswerInputSchema,
   GenerateAnswerOutputSchema,
 } from './types';
 
@@ -19,6 +19,7 @@ const generateAnswerPrompt = ai.definePrompt({
   output: {
     schema: GenerateAnswerOutputSchema,
   },
+  model: 'googleai/gemini-1.5-flash',
   prompt: `You are a helpful AI assistant designed to answer questions based *only* on the provided context from a document. Your answers must be grounded in the text. Do not use any outside knowledge.
 
 If the context does not contain the information needed to answer the question, state that you could not find the answer in the document.

@@ -6,8 +6,8 @@
 import {ai} from '@/ai/genkit';
 import {
   SemanticSearchInput,
-  SemanticSearchInputSchema,
   SemanticSearchOutput,
+  SemanticSearchInputSchema,
   SemanticSearchOutputSchema,
 } from './types';
 
@@ -19,6 +19,7 @@ const semanticSearchPrompt = ai.definePrompt({
   output: {
     schema: SemanticSearchOutputSchema,
   },
+  model: 'googleai/gemini-1.5-flash',
   prompt: `You are an expert academic research assistant. A student has provided the text content of a PDF document and has a question about it.
 
 Your task is to carefully analyze the PDF content and extract the most relevant excerpts that will help answer the student's question. Return a list of the most relevant text excerpts.
