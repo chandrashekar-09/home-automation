@@ -225,111 +225,116 @@ export function ScholarAI() {
 
   return (
     <main className="grid h-screen w-full grid-cols-1 lg:grid-cols-2 gap-4 p-4 animate-in fade-in-50 duration-500">
-      <Card className="flex flex-col">
-        <CardHeader className="flex-shrink-0">
-          <CardTitle className="font-headline text-xl flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Document Viewer
-          </CardTitle>
-          <CardDescription>{pdfFile.name}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex-grow overflow-hidden">
-          <ScrollArea className="h-full rounded-md border">
-            <HighlightedContent
-              text={pdfText}
-              highlights={highlightedExcerpts}
-            />
-          </ScrollArea>
-        </CardContent>
-      </Card>
-      <Card className="flex flex-col">
-        <CardHeader className="flex-shrink-0">
-          <CardTitle className="font-headline text-xl flex items-center gap-2">
-            <Bot className="h-5 w-5" />
-            ScholarAI Assistant
-          </CardTitle>
-          <CardDescription>
-            Ask questions about the document and get AI-powered answers.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex-grow overflow-hidden">
-          <ScrollArea className="h-full pr-4" ref={chatScrollAreaRef}>
-            <div className="space-y-4">
-              {chatHistory.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex items-start gap-3 ${
-                    message.role === 'user' ? 'justify-end' : ''
-                  }`}
-                >
-                  {message.role === 'assistant' && (
+      <div className="flex flex-col h-full overflow-y-auto">
+        <Card className="flex flex-col flex-grow">
+          <CardHeader className="flex-shrink-0">
+            <CardTitle className="font-headline text-xl flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Document Viewer
+            </CardTitle>
+            <CardDescription>{pdfFile.name}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-grow overflow-hidden">
+            <ScrollArea className="h-full rounded-md border">
+              <HighlightedContent
+                text={pdfText}
+                highlights={highlightedExcerpts}
+              />
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="h-full flex flex-col">
+        <Card className="flex flex-col h-full">
+          <CardHeader className="flex-shrink-0">
+            <CardTitle className="font-headline text-xl flex items-center gap-2">
+              <Bot className="h-5 w-5" />
+              ScholarAI Assistant
+            </CardTitle>
+            <CardDescription>
+              Ask questions about the document and get AI-powered answers.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-grow overflow-hidden">
+            <ScrollArea className="h-full pr-4" ref={chatScrollAreaRef}>
+              <div className="space-y-4">
+                {chatHistory.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-start gap-3 ${
+                      message.role === 'user' ? 'justify-end' : ''
+                    }`}
+                  >
+                    {message.role === 'assistant' && (
+                      <Avatar className="h-8 w-8 border-2 border-primary">
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          <Bot size={18} />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div
+                      className={`max-w-[80%] rounded-lg p-3 text-sm ${
+                        message.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      <p>{message.content}</p>
+                    </div>
+                    {message.role === 'user' && (
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>
+                          <User size={18} />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex items-start gap-3">
                     <Avatar className="h-8 w-8 border-2 border-primary">
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         <Bot size={18} />
                       </AvatarFallback>
                     </Avatar>
-                  )}
-                  <div
-                    className={`max-w-[80%] rounded-lg p-3 text-sm ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
-                  >
-                    <p>{message.content}</p>
-                  </div>
-                  {message.role === 'user' && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        <User size={18} />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-8 w-8 border-2 border-primary">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      <Bot size={18} />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="max-w-[80%] rounded-lg p-3 bg-muted">
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Thinking...</span>
+                    <div className="max-w-[80%] rounded-lg p-3 bg-muted">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Thinking...</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-        </CardContent>
-        <CardFooter>
-          <form
-            onSubmit={handleQuestionSubmit}
-            className="flex w-full items-center gap-2"
-          >
-            <Textarea
-              placeholder="Type your question here..."
-              value={currentQuestion}
-              onChange={e => setCurrentQuestion(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleQuestionSubmit(e);
-                }
-              }}
-              rows={1}
-              className="min-h-[40px] max-h-24 flex-grow resize-none"
-              disabled={isLoading || isParsing}
-            />
-            <Button type="submit" size="icon" disabled={isLoading || isParsing}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-        </CardFooter>
-      </Card>
+                )}
+              </div>
+            </ScrollArea>
+          </CardContent>
+          <CardFooter>
+            <form
+              onSubmit={handleQuestionSubmit}
+              className="flex w-full items-center gap-2"
+            >
+              <Textarea
+                placeholder="Type your question here..."
+                value={currentQuestion}
+                onChange={e => setCurrentQuestion(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleQuestionSubmit(e);
+                  }
+                }}
+                rows={1}
+                className="min-h-[40px] max-h-24 flex-grow resize-none"
+                disabled={isLoading || isParsing}
+              />
+              <Button type="submit" size="icon" disabled={isLoading || isParsing}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </CardFooter>
+        </Card>
+      </div>
     </main>
   );
 }
