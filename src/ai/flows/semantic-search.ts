@@ -33,16 +33,24 @@ export async function semanticSearch(
   return semanticSearchFlow(input);
 }
 
-const prompt = `You are an expert academic assistant. A student has uploaded PDF documents, and wants to ask a question.
+const semanticSearchPrompt = ai.definePrompt({
+  name: 'semanticSearchPrompt',
+  input: {
+    schema: SemanticSearchInputSchema,
+  },
+  output: {
+    schema: SemanticSearchOutputSchema,
+  },
+  prompt: `You are an expert academic assistant. A student has uploaded PDF documents, and wants to ask a question.
 
-  Your job is to return relevant excerpts from the PDF content that will help answer the question.
+Your job is to return relevant excerpts from the PDF content that will help answer the question.
 
-  Question: {{question}}
+Question: {{{question}}}
 
-  PDF Content: {{pdfContent}}
+PDF Content: {{{pdfContent}}}
 
-  Return the excerpts as a list of strings.
-  `;
+Return the excerpts as a list of strings.`,
+});
 
 const semanticSearchFlow = ai.defineFlow(
   {
@@ -50,16 +58,8 @@ const semanticSearchFlow = ai.defineFlow(
     inputSchema: SemanticSearchInputSchema,
     outputSchema: SemanticSearchOutputSchema,
   },
-  async input => {
-    const {output} = await ai.generate({
-      prompt: {
-        text: prompt,
-        input: input,
-      },
-      output: {
-        schema: SemanticSearchOutputSchema,
-      },
-    });
+  async (input) => {
+    const {output} = await semanticSearchPrompt(input);
     return output!;
   }
 );

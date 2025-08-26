@@ -29,8 +29,22 @@ export async function generateAnswer(
   return generateAnswerFlow(input);
 }
 
-const prompt =
-  'You are a helpful AI assistant that answers questions based on provided context from a document.\n\n  Question: {{question}}\n\n  Context: {{context}}\n\n  Answer: ';
+const generateAnswerPrompt = ai.definePrompt({
+  name: 'generateAnswerPrompt',
+  input: {
+    schema: GenerateAnswerInputSchema,
+  },
+  output: {
+    schema: GenerateAnswerOutputSchema,
+  },
+  prompt: `You are a helpful AI assistant that answers questions based on provided context from a document.
+
+Question: {{{question}}}
+
+Context: {{{context}}}
+
+Answer:`,
+});
 
 const generateAnswerFlow = ai.defineFlow(
   {
@@ -38,16 +52,8 @@ const generateAnswerFlow = ai.defineFlow(
     inputSchema: GenerateAnswerInputSchema,
     outputSchema: GenerateAnswerOutputSchema,
   },
-  async input => {
-    const {output} = await ai.generate({
-      prompt: {
-        text: prompt,
-        input: input,
-      },
-      output: {
-        schema: GenerateAnswerOutputSchema,
-      },
-    });
+  async (input) => {
+    const {output} = await generateAnswerPrompt(input);
     return output!;
   }
 );
