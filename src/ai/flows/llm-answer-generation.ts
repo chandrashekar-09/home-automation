@@ -37,13 +37,18 @@ const generateAnswerPrompt = ai.definePrompt({
   output: {
     schema: GenerateAnswerOutputSchema,
   },
-  prompt: `You are a helpful AI assistant that answers questions based on provided context from a document.
+  prompt: `You are a helpful AI assistant designed to answer questions based *only* on the provided context from a document. Your answers must be grounded in the text. Do not use any outside knowledge.
 
-Question: {{{question}}}
+If the context does not contain the information needed to answer the question, state that you could not find the answer in the document.
 
-Context: {{{context}}}
+Context from the document:
+---
+{{{context}}}
+---
 
-Answer:`,
+Based on the context above, please answer the following question.
+
+Question: {{{question}}}`,
 });
 
 const generateAnswerFlow = ai.defineFlow(

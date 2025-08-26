@@ -23,7 +23,7 @@ export type SemanticSearchInput = z.infer<typeof SemanticSearchInputSchema>;
 const SemanticSearchOutputSchema = z.object({
   excerpts: z
     .array(z.string())
-    .describe('The relevant text excerpts from the PDF content.'),
+    .describe('The most relevant text excerpts from the PDF content that help answer the question.'),
 });
 export type SemanticSearchOutput = z.infer<typeof SemanticSearchOutputSchema>;
 
@@ -41,13 +41,16 @@ const semanticSearchPrompt = ai.definePrompt({
   output: {
     schema: SemanticSearchOutputSchema,
   },
-  prompt: `You are an expert academic assistant. A student has uploaded PDF documents, and wants to ask a question.
+  prompt: `You are an expert academic research assistant. A student has provided the text content of a PDF document and has a question about it.
 
-Your job is to return relevant excerpts from the PDF content that will help answer the question.
+Your task is to carefully analyze the PDF content and extract the most relevant excerpts that will help answer the student's question. Return a list of the most relevant text excerpts.
 
 Question: {{{question}}}
 
-PDF Content: {{{pdfContent}}}
+PDF Content:
+---
+{{{pdfContent}}}
+---
 
 Return the excerpts as a list of strings.`,
 });

@@ -43,6 +43,7 @@ const HighlightedContent = ({
 
   let highlightedText = text;
   highlights.forEach(highlight => {
+    if (highlight.trim() === '') return;
     const regex = new RegExp(escapeRegExp(highlight), 'g');
     highlightedText = highlightedText.replace(
       regex,
@@ -69,11 +70,10 @@ export function ScholarAI() {
   const [isPdfJsLoaded, setIsPdfJsLoaded] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const chatScrollAreaRef = useRef<HTMLDivElement>(null);
+  const chatScrollAreaRef = useRef<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if pdfjsLib is loaded
     const checkPdfJs = () => {
       if (typeof pdfjsLib !== 'undefined') {
         pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -86,11 +86,13 @@ export function ScholarAI() {
   }, []);
 
   useEffect(() => {
-    if (chatScrollAreaRef.current) {
-      chatScrollAreaRef.current.scrollTop =
-        chatScrollAreaRef.current.scrollHeight;
+    // Scroll to the bottom of the chat history
+    const viewport = chatScrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (viewport) {
+      viewport.scrollTop = viewport.scrollHeight;
     }
   }, [chatHistory, isLoading]);
+
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -168,7 +170,7 @@ export function ScholarAI() {
 
     setIsLoading(false);
 
-    if (result.success) {
+    if (result.success && result.answer) {
       setChatHistory(prev => [
         ...prev,
         { role: 'assistant', content: result.answer! },
@@ -179,7 +181,7 @@ export function ScholarAI() {
         ...prev,
         {
           role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again.',
+          content: `Sorry, I encountered an error. Please try again. ${result.error || ''}`,
         },
       ]);
       toast({
@@ -225,7 +227,7 @@ export function ScholarAI() {
 
   return (
     <main className="grid h-screen w-full grid-cols-1 lg:grid-cols-2 gap-4 p-4 animate-in fade-in-50 duration-500">
-      <div className="flex flex-col h-full overflow-y-auto">
+      <div className="flex flex-col h-[calc(100vh-2rem)]">
         <Card className="flex flex-col flex-grow">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="font-headline text-xl flex items-center gap-2">
@@ -245,7 +247,7 @@ export function ScholarAI() {
         </Card>
       </div>
 
-      <div className="h-full flex flex-col">
+      <div className="h-[calc(100vh-2rem)] flex flex-col">
         <Card className="flex flex-col h-full">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="font-headline text-xl flex items-center gap-2">
@@ -328,7 +330,7 @@ export function ScholarAI() {
                 className="min-h-[40px] max-h-24 flex-grow resize-none"
                 disabled={isLoading || isParsing}
               />
-              <Button type="submit" size="icon" disabled={isLoading || isParsing}>
+              <Button type="submit" size="icon" disabled={isLoading || isParsing || !currentQuestion.trim()}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>
