@@ -18,6 +18,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Bot, FileText, Loader2, Send, UploadCloud, User } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
+// pdfjs-dist is loaded from a CDN in layout.tsx
+declare const pdfjsLib: any;
+
 type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
@@ -63,10 +66,24 @@ export function ScholarAI() {
   const [isLoading, setIsLoading] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [highlightedExcerpts, setHighlightedExcerpts] = useState<string[]>([]);
+  const [isPdfJsLoaded, setIsPdfJsLoaded] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatScrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if pdfjsLib is loaded
+    const checkPdfJs = () => {
+      if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+        setIsPdfJsLoaded(true);
+      } else {
+        setTimeout(checkPdfJs, 100);
+      }
+    };
+    checkPdfJs();
+  }, []);
 
   useEffect(() => {
     if (chatScrollAreaRef.current) {
@@ -75,16 +92,35 @@ export function ScholarAI() {
     }
   }, [chatHistory, isLoading]);
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'application/pdf') {
+      if (!isPdfJsLoaded) {
+        toast({
+          variant: 'destructive',
+          title: 'PDF Library Not Loaded',
+          description: 'The PDF parsing library is still loading. Please try again in a moment.',
+        });
+        return;
+      }
+
       setIsParsing(true);
       setPdfFile(file);
       try {
-        // Mocking PDF parsing since pdfjs-dist is removed
-        setTimeout(() => {
-          const mockText = `This is mock content for ${file.name}. The actual PDF parsing is disabled due to an installation issue.`;
-          setPdfText(mockText);
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const typedarray = new Uint8Array(reader.result as ArrayBuffer);
+          const pdf = await pdfjsLib.getDocument(typedarray).promise;
+          let fullText = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            fullText += textContent.items.map((item: any) => ('str' in item ? item.str : '')).join(' ');
+            fullText += '\n';
+          }
+          setPdfText(fullText);
           setChatHistory([
             {
               role: 'assistant',
@@ -93,13 +129,14 @@ export function ScholarAI() {
           ]);
           setHighlightedExcerpts([]);
           setIsParsing(false);
-        }, 1000);
+        };
+        reader.readAsArrayBuffer(file);
       } catch (error) {
-         console.error('Error reading file:', error);
-         toast({
+        console.error('Error parsing PDF:', error);
+        toast({
           variant: 'destructive',
-          title: 'File Read Error',
-          description: 'Could not read the selected file.',
+          title: 'PDF Parse Error',
+          description: 'Could not parse the selected PDF file.',
         });
         setIsParsing(false);
         setPdfFile(null);
@@ -112,6 +149,7 @@ export function ScholarAI() {
       });
     }
   };
+
 
   const handleQuestionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,8 +207,8 @@ export function ScholarAI() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <Button onClick={() => fileInputRef.current?.click()} disabled={isParsing}>
-              {isParsing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Parsing...</> : <><UploadCloud className="mr-2 h-4 w-4" /> Upload PDF</>}
+            <Button onClick={() => fileInputRef.current?.click()} disabled={isParsing || !isPdfJsLoaded}>
+              {isParsing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Parsing...</> : !isPdfJsLoaded ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading PDF Lib...</> :<><UploadCloud className="mr-2 h-4 w-4" /> Upload PDF</>}
             </Button>
             <Input
               type="file"

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'ScholarAI',
@@ -27,6 +28,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
+        <Script src="https://unpkg.com/pdfjs-dist@4.2.67/build/pdf.min.mjs" type="module" />
         {children}
         <Toaster />
       </body>
